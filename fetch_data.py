@@ -155,6 +155,31 @@ class DataFetcher:
 
         #get the key: Top Analysts
         return dict['Top Analysts']
+    
+
+    def getNews_1(self, ticker):
+        """
+        Function that get the news from the first source for the given ticker
+        Args:
+        ticker: str, the ticker of the company
+        Returns:
+        res: dict, the response of the download
+        """
+        cacheKey = f"{ticker}_news1"
+        with sh.open(self.cacheFile) as db:
+            if cacheKey in db:
+                res = db[cacheKey]
+                if res['timestamp'] + self.cacheExpiration > datetime.now():
+                    return res['content']
+
+        dict = Scraper(ticker).get_news1()
+
+        #store the content in the cache
+        res = {'content': dict, 'timestamp': datetime.now()}
+        with sh.open(self.cacheFile) as db:
+            db[cacheKey] = res
+
+        return dict
 
                     
                 

@@ -2,11 +2,11 @@ from sec_agent import SECAgent
 from analyst_agent import AnalystAgent
 
 def main():
-    ticker = "AAPL"
+    ticker = "PLTR"
     sec_agent = SECAgent(ticker=ticker, localmodel=False)
     analyst_agent = AnalystAgent(ticker=ticker, localmodel=True)
 
-    result = analyst_agent.generateResponseTopAnalysts()
+    result = analyst_agent.generateResponse_News1()
     print(result)
 
 

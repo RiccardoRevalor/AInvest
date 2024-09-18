@@ -79,3 +79,32 @@ class AnalystAgent:
             result = llm.generateResponse(prompt, model=self.model)
         
         return result
+    
+
+    def generateResponse_News1(self):
+        """
+        Function that generates a response based on the news data from the first source
+        """
+        news_raw = DataFetcher().getNews_1(self.ticker)
+        #Convert to JSON because LLAMA understands JSON input better
+        news = json.dumps(news_raw, indent=4)
+
+        prompt = f"""
+            You are a top-notch financial analyst at reading news about {self.ticker} and drawing conclusions that only a PhD level quant can draw.
+            You are given some news data and your job is to carefully read it, and extract some kind of a unique insight.
+            **We are going to use these insights to make decisions about building a RATING (buy, hold, sell) for the stock.**
+            You have to be technical, quantitative, use numbers, and most of all, creative. You cannot act like a 2 year old.
+            **DO NOT describe the JSON structure**. Instead, provide insights based on the following news data:
+
+            {news}
+
+            Now return a one paragraph insights from this data. **Use as many articles as you can while maintaining coherence and grammar.** Add a heading/title in the first line. The heading should explain the paragraph, should not be generic. For instance, a title like `AAPL's next support is at 138' is better than 'AAPL's support levels'
+            **NO notes, comments, prefix, suffix, starting with `here is`, etc. Start directly with insights. Use numbers and statistics where you can.**
+            """
+        
+        if self.localmodel:
+            result = llm.generateResponseLocally(prompt)
+        else:
+            result = llm.generateResponse(prompt, model=self.model)
+        
+        return result
