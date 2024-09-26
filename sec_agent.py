@@ -1,6 +1,7 @@
 import llm
 from fetch_data import DataFetcher
 from random import choice
+from text_summary import summarize_text
 
 class SECAgent:
     def __init__(self, ticker, localmodel=False):
@@ -9,12 +10,16 @@ class SECAgent:
         self.localmodel = localmodel
         self.data = [DataFetcher().get10k_1A(self.ticker),
                      DataFetcher().get10k_5(self.ticker),
-                     DataFetcher().get10k_6(self.ticker),
+                     #DataFetcher().get10k_6(self.ticker),
                      DataFetcher().get10k_7(self.ticker),
                      DataFetcher().get10k_7A(self.ticker),
                      DataFetcher().get10k_8(self.ticker)]
 
     def generateResponse(self):
+        
+        data_raw =choice(self.data) #random item from the 10-K report
+        data = summarize_text(data_raw)
+
         """
         function that generates a response to a given prompt using the Groq API
         It takes a random item from the 10-K report and generates a response to it
@@ -22,7 +27,7 @@ class SECAgent:
         res: str, the generated response
         """
 
-        data =choice(self.data) #random item from the 10-K report
+        
 
         prompt = f"""
         You are an expert financial analyst at reading SEC filings and drawing conclusions that only a PhD level quant can draw.
@@ -32,7 +37,7 @@ class SECAgent:
 
         Here is the data dump:
         ```
-        {data[0:1000]}
+        {data}
         ```
 
         Now return a one paragraph insights from this data. Add a heading/title in the first line. The heading should explain the paragraph, should not be generic. For instance, a title like `AAPL's next support is at 138' is better than 'AAPL's support levels'
@@ -65,7 +70,7 @@ class SECAgent:
             ```
 
             Now return a one paragraph insights from this data. Add a heading/title in the first line. The heading should explain the paragraph, should not be generic. For instance, a title like `AAPL's next support is at 138' is better than 'AAPL's support levels'
-            No prefix, suffix, starting with `here is`, etc. Start directly with insights. Use numbers and statistics where you can, but not graphs.
+            **No notes, comments, prefix, suffix, starting with `here is`, etc. Start directly with insights. Use numbers and statistics where you can, but not graphs.**
             """
         initial = False
         final_text = ""
@@ -77,7 +82,7 @@ class SECAgent:
                 initial = True
 
             else:
-                prompt = "Now, you have got more information to work with. Extract the relevant data from the following text and integrate it with the previous insights. The integration has to be fluent and the final text has to be continuous. Don't separate the two text but merge them into one. The data dump is as follows:\n```\n{%s}\n```\n" % chunk
+                prompt = "Now, you have got more information to work with. Extract the relevant data from the following text and integrate it with the previous insights. The integration has to be fluent and the final text has to be continuous. Don't separate the two text but merge them into one. **No notes, comments, prefix, suffix, starting with `here is`, etc. Start directly with insights. Use numbers and statistics where you can, but not graphs.** The data dump is as follows:\n```\n{%s}\n```\n" % chunk
 
             if self.localmodel:
                 result = llm.generateResponseLocally(prompt)

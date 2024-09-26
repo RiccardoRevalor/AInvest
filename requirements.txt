@@ -1,0 +1,7 @@
+lexrank
+sumy
+sklearn
+numpy
+pandas
+bs4
+playwright

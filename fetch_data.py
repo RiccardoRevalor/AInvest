@@ -180,9 +180,55 @@ class DataFetcher:
             db[cacheKey] = res
 
         return dict
+    
+    def getNews_2(self, ticker):
+        """
+        Function that get the news from the second source for the given ticker
+        Args:
+        ticker: str, the ticker of the company
+        Returns:
+        res: dict, the response of the download
+        """
+        cacheKey = f"{ticker}_news2"
+        with sh.open(self.cacheFile) as db:
+            if cacheKey in db:
+                res = db[cacheKey]
+                if res['timestamp'] + self.cacheExpiration > datetime.now():
+                    return res['content']
+
+        dict = Scraper(ticker).get_finviz_news()
+
+        #store the content in the cache
+        res = {'content': dict, 'timestamp': datetime.now()}
+        with sh.open(self.cacheFile) as db:
+            db[cacheKey] = res
+
+        return dict
 
                     
-                
+    def getNews_3(self, ticker):
+        """
+        Function that get the news from the third source for the given ticker
+        Args:
+        ticker: str, the ticker of the company
+        Returns:
+        res: dict, the response of the download
+        """
+        cacheKey = f"{ticker}_news3"
+        with sh.open(self.cacheFile) as db:
+            if cacheKey in db:
+                res = db[cacheKey]
+                if res['timestamp'] + self.cacheExpiration > datetime.now():
+                    return res['content']
+
+        dict = Scraper(ticker).get_news2()
+
+        #store the content in the cache
+        res = {'content': dict, 'timestamp': datetime.now()}
+        with sh.open(self.cacheFile) as db:
+            db[cacheKey] = res
+
+        return dict      
 
 
     def get10k_1A(self, ticker):

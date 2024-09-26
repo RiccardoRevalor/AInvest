@@ -1,6 +1,7 @@
 import llm
 from fetch_data import DataFetcher
 import json
+from vaderSentiment.vaderSentiment import SentimentIntensityAnalyzer
 
 class AnalystAgent:
     def __init__(self, ticker, localmodel=False):
@@ -71,6 +72,8 @@ class AnalystAgent:
             Here is the data:
 
             {top_analysts}
+
+            **NO notes, comments, prefix, suffix, starting with here is, etc. START DIRECTLY with insights!. USE NUMBERS, PERCENTS AND STATISTICS where you can.**
             """
         
         if self.localmodel:
@@ -99,7 +102,7 @@ class AnalystAgent:
             {news}
 
             Now return a one paragraph insights from this data. **Use as many articles as you can while maintaining coherence and grammar.** Add a heading/title in the first line. The heading should explain the paragraph, should not be generic. For instance, a title like `AAPL's next support is at 138' is better than 'AAPL's support levels'
-            **NO notes, comments, prefix, suffix, starting with `here is`, etc. Start directly with insights. Use numbers and statistics where you can.**
+            **NO notes, comments, prefix, suffix, starting with here is, etc. START DIRECTLY with insights!. USE NUMBERS, PERCENTS AND STATISTICS where you can.**
             """
         
         if self.localmodel:
@@ -108,3 +111,111 @@ class AnalystAgent:
             result = llm.generateResponse(prompt, model=self.model)
         
         return result
+    
+    def evaluateArticle(self):
+        """
+        Function that evaluates a single article using the LLAMA model
+        """
+
+        articles = DataFetcher().getNews_3(self.ticker)
+
+        #the articles are related to the first and the second items in teh list
+        #the likst contains dictionaries with the title and the text of the article
+
+        articles_list = ""
+        for article in articles:
+            for key,value in article.items():
+                articles_list += key + "\n" + value + "\
+                \n\n"
+        articles_list = articles_list[:-2]
+
+        prompt = f"""
+            You are a top-notch financial analyst focused on reading news specifically about {self.ticker} and drawing conclusions that only a PhD-level quant can draw.
+            You are given two articles about {self.ticker}. **DO NOT describe the data structure!**. **ONLY analyze the parts of the news that discuss the stock {self.ticker} directly !!!. Ignore any mention of unrelated stocks, ETFs, or broader market commentary**.
+            **You have the carefully analyze the IMPACT of these articles on the stock {self.ticker} and provide a clear assessment of the overall sentiment!!**
+            Here are the articles:
+
+            {articles_list}
+
+            **NO notes, comments, prefix, suffix, starting with here is, etc. START DIRECTLY with insights!. USE NUMBERS, PERCENTS AND STATISTICS where you can.**
+        """
+
+        if self.localmodel:
+            result = llm.generateResponseLocally(prompt)
+        else:
+            result = llm.generateResponse(prompt, model=self.model)
+        
+        return result
+       
+    def classifyNews(self, news):
+        """
+        Function that classifies the news data from the first source using the LLAMA model
+        """
+
+        prompt = f"""
+            You are a top-notch financial analyst focused on reading news specifically about {self.ticker} and drawing conclusions that only a PhD-level quant can draw.
+            You are given some news data about {self.ticker}. **DO NOT describe the data structure!**. **ONLY analyze the parts of the news that discuss the stock {self.ticker} directly !!!. Ignore any mention of unrelated stocks, ETFs, or broader market commentary**.
+            Classify the sentiment of the relevant news articles about {self.ticker} using the following categories: Positive, Negative, Neutral, Mixed.
+            **Provide a clear assessment of the overall sentiment for the stock {self.ticker}, without discussing any other companies or providing additional options. Start directly with insights, and avoid unrelated information.**
+            Here is the news data:
+
+            {news}
+
+            **NO notes, comments, prefix, suffix, starting with here is, etc. START DIRECTLY with insights!. USE NUMBERS, PERCENTS AND STATISTICS where you can.**
+        """
+        
+        if self.localmodel:
+            result = llm.generateResponseLocally(prompt)
+        else:
+            result = llm.generateResponse(prompt, model=self.model)
+        
+        return result
+    
+    def classifyNews1(self):
+        """
+        Function that classifies the news data from the first source (STOCKMARKETCAP) using the LLAMA model
+        """
+        news_raw = DataFetcher().getNews_1(self.ticker)
+        #Convert to JSON because LLAMA understands JSON input better
+        news = json.dumps(news_raw, indent=4)
+        return self.classifyNews(news)
+    
+    def classifyNews2(self):
+        """
+        Function that classifies the news data from the second source (FINVIZ) using the LLAMA model
+        """
+        news_raw = DataFetcher().getNews_2(self.ticker)
+        return self.classifyNews(news_raw)
+
+    def getSentiment_method1_News1(self):
+        """
+        Function that calculates the sentiment of the news data from the first source
+        It use the VADER sentiment analysis tool. It is a rule-based sentiment analysis tool specifically tuned to analyze sentiments in social media text.
+        """
+
+        news_raw = DataFetcher().getNews_1(self.ticker)
+        #the text is reformatted this way: the title of the article followed by a period and the text of the article
+        news_list = []
+
+        for article in news_raw:
+            for key,value in article.items():
+                news_list.append(key + "\n" + value)
+
+        #initialize the sentiment analyzer
+        analyzer = SentimentIntensityAnalyzer()
+
+        sentiments = []
+        for news in news_list:
+            sentiment = analyzer.polarity_scores(news)
+            sentiments.append({news: sentiment})
+
+        #calculate average compound score
+        #the compound is in the sentiment value of the dictionary
+        compound = 0
+        for s in sentiments:
+            for value in s.values():
+                compound += value['compound']
+        compound = compound/len(sentiments)
+       
+        
+        return sentiments, compound
