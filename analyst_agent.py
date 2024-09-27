@@ -2,6 +2,8 @@ import llm
 from fetch_data import DataFetcher
 import json
 from vaderSentiment.vaderSentiment import SentimentIntensityAnalyzer
+from ap_api import getNewsSentiment
+from random import randint
 
 class AnalystAgent:
     def __init__(self, ticker, localmodel=False):
@@ -73,7 +75,7 @@ class AnalystAgent:
 
             {top_analysts}
 
-            **NO notes, comments, prefix, suffix, starting with here is, etc. START DIRECTLY with insights!. USE NUMBERS, PERCENTS AND STATISTICS where you can.**
+            **NO notes, comments, prefix, suffix, starting with here is, etc. START DIRECTLY with insights!. USE NUMBERS, PERCENTS AND STATISTICS where you can. Use at max 150-200 words.**
             """
         
         if self.localmodel:
@@ -102,7 +104,7 @@ class AnalystAgent:
             {news}
 
             Now return a one paragraph insights from this data. **Use as many articles as you can while maintaining coherence and grammar.** Add a heading/title in the first line. The heading should explain the paragraph, should not be generic. For instance, a title like `AAPL's next support is at 138' is better than 'AAPL's support levels'
-            **NO notes, comments, prefix, suffix, starting with here is, etc. START DIRECTLY with insights!. USE NUMBERS, PERCENTS AND STATISTICS where you can.**
+            **NO notes, comments, prefix, suffix, starting with here is, etc. START DIRECTLY with insights!. USE NUMBERS, PERCENTS AND STATISTICS where you can. Use at max 100 words.**
             """
         
         if self.localmodel:
@@ -137,7 +139,7 @@ class AnalystAgent:
 
             {articles_list}
 
-            **NO notes, comments, prefix, suffix, starting with here is, etc. START DIRECTLY with insights!. USE NUMBERS, PERCENTS AND STATISTICS where you can.**
+            **NO notes, comments, prefix, suffix, starting with here is, etc. START DIRECTLY with insights!. USE NUMBERS, PERCENTS AND STATISTICS where you can. Use at max 100 words.**
         """
 
         if self.localmodel:
@@ -161,7 +163,7 @@ class AnalystAgent:
 
             {news}
 
-            **NO notes, comments, prefix, suffix, starting with here is, etc. START DIRECTLY with insights!. USE NUMBERS, PERCENTS AND STATISTICS where you can.**
+            **NO notes, comments, prefix, suffix, starting with here is, etc. START DIRECTLY with insights!. USE NUMBERS, PERCENTS AND STATISTICS where you can. The max length of the output must be 200 words at max.**
         """
         
         if self.localmodel:
@@ -170,6 +172,47 @@ class AnalystAgent:
             result = llm.generateResponse(prompt, model=self.model)
         
         return result
+    
+    def price_target_News(self, news):
+        """
+        Function that generates a price target for the stock based on the news data 
+        """
+
+        prompt = f"""
+            You are the head of the quantitative division at a major hedge fund, tasked with providing a short to medium-term price target for {self.ticker}. You have access to a plethora of information and insights about {self.ticker}, and your analysis must be technically precise and insightful.
+
+            You are given news data and quantitative insights about {self.ticker}. **DO NOT describe the data structure!**. **ONLY analyze the parts that discuss the stock {self.ticker} directly!!! Ignore any mention of unrelated stocks, ETFs, or broader market commentary**.
+
+            Your task is to output a clear price target for {self.ticker} based on a comprehensive analysis of sentiment, market trends, fundamentals, and risks. Your analysis should focus on numbers, percentages, and statistics to justify the price target.
+
+            Output format:
+            Your output must be a valid JSON with exactly two fields:
+            - "price_target": a single numeric value for the projected stock price in the short to medium term.
+            - "thesis": a technical summary (50-100 words) justifying the price target, highlighting key metrics such as sentiment, market trends, fundamentals, and risks.
+
+            Use concise language but ensure your answer is technically accurate, with numbers and statistics backing your thesis.
+
+            Here is the information you need to process:
+
+            {news}
+
+            **Your output should contain only the JSON. Do not include notes, comments, or any other text. The JSON must contain just the "price_target" and "thesis" fields.**
+        """
+
+
+        if self.localmodel:
+            result = llm.generateResponseLocally(prompt)
+        else:
+            result = llm.generateResponse(prompt, model=self.model)
+        
+        return result
+    
+    def price_target_News1(self):
+        """
+        Function that generates a price target for the stock based on the news data from the first source
+        """
+        news = DataFetcher().get_AP_news_sentiment(self.ticker)
+        return self.price_target_News(news)
     
     def classifyNews1(self):
         """
@@ -219,3 +262,31 @@ class AnalystAgent:
        
         
         return sentiments, compound
+
+    def generateResponse_AP_News(self):
+        """
+        Function that generates a response based on the news data from the Alpha Vantage API News Sentiment endpoint
+        """
+        items, instr = getNewsSentiment(self.ticker)
+        #genarate random number from 0 to items length - 5
+        # index = randint(0, len(items)-6)
+        #select 5 news articles
+        news = items #[index:index+5]
+
+        prompt = f""" You are a top-notch financial analyst focused on reading news specifically about {self.ticker} and drawing conclusions that only a PhD-level quant can draw.
+        You are given the following parameters to assess sentiment on a scale: {instr}
+        Your task is to analyze the article and focus on deriving the **overall sentiment**, as well as specific sentiment tied to the stock, considering factors like relevance score and sentiment score.
+Additionally, based on the topics and sentiment data, provide a short analysis on how this sentiment may affect the stock's **future price movements** or market perception. Return a **PRICE TARGET** at the end! DO NOT specify that it's not an investment advice.
+Prioritize clarity and precision in identifying whether the stock is viewed favorably or unfavorably, and contextualize your conclusion using sentiment metrics and financial insight.
+Here are the articles:
+{news}
+**DO NOT describe the JSON structure**. **NO notes, comments, prefix, suffix, starting with 'here is', etc. START DIRECTLY with insights! The max length of the output must be 150-200 words at max.**
+        """
+        
+        if self.localmodel:
+            result = llm.generateResponseLocally(prompt)
+        else:
+            result = llm.generateResponse(prompt, model=self.model)
+        
+        return result
+

@@ -6,6 +6,7 @@ import shutil
 from html_reader import HtmlReader
 from filings_reader import FilingsReader
 from scraper import Scraper
+import ap_api as ap
 
 
 class DataFetcher:
@@ -128,7 +129,16 @@ class DataFetcher:
 
 
         
-
+    def get_AP_news_sentiment(self, ticker):
+        """
+        Function that get the news sentiment for the given ticker
+        Args:
+        ticker: str, the ticker of the company
+        Returns:
+        res: dict, the response of the download
+        """
+        return ap.getNewsSentiment(ticker)
+    
     def get_estimates(self, ticker):
         """
         Function that get the Yahoo estimates for the given ticker

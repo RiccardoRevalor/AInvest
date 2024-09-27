@@ -5,3 +5,8 @@ numpy
 pandas
 bs4
 playwright
+markdown
+groq
+langchain
+langchain_ollama
+langchain_core
