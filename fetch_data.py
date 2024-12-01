@@ -62,6 +62,9 @@ class DataFetcher:
         default_pathName = "sec-edgar-filings"
         filing_path = os.path.join(current_dir, default_pathName, ticker, type)
 
+        if not os.path.exists(filing_path):
+            return "No filing of type {} found for company {}".format(type, ticker)
+
         #example of filing path: R:\AInvest\sec-edgar-filings\MSFT\10-K
 
         #search for the newest folder in the filing path
@@ -250,6 +253,9 @@ class DataFetcher:
         res: str, the response of the download
         """
         items = self.downloadSecFiling(ticker, "10-K")
+        if isinstance(items, str):
+            #error: if items is a str it means filing was not fecthed properly
+            return "Error"
         return items['item_1a']
     
     def get10k_5(self, ticker):
@@ -261,6 +267,9 @@ class DataFetcher:
         res: str, the response of the download
         """
         items = self.downloadSecFiling(ticker, "10-K")
+        if isinstance(items, str):
+            #error: if items is a str it means filing was not fecthed properly
+            return "Error"
         return items['item_5']
 
     def get10k_6(self, ticker):
@@ -272,6 +281,9 @@ class DataFetcher:
         res: str, the response of the download
         """
         items = self.downloadSecFiling(ticker, "10-K")
+        if isinstance(items, str):
+            #error: if items is a str it means filing was not fecthed properly
+            return "Error"
         return items['item_6']
 
     def get10k_7(self, ticker):
@@ -283,6 +295,9 @@ class DataFetcher:
         res: str, the response of the download
         """
         items = self.downloadSecFiling(ticker, "10-K")
+        if isinstance(items, str):
+            #error: if items is a str it means filing was not fecthed properly
+            return "Error"
         return items['item_7']
     
     def get10k_7A(self, ticker):
@@ -294,6 +309,9 @@ class DataFetcher:
         res: str, the response of the download
         """
         items = self.downloadSecFiling(ticker, "10-K")
+        if isinstance(items, str):
+            #error: if items is a str it means filing was not fecthed properly
+            return "Error"
         return items['item_7a']
     
     def get10k_8(self, ticker):
@@ -305,6 +323,9 @@ class DataFetcher:
         res: str, the response of the download
         """
         items = self.downloadSecFiling(ticker, "10-K")
+        if isinstance(items, str):
+            #error: if items is a str it means filing was not fecthed properly
+            return "Error"
         return items['item_8']
 
 

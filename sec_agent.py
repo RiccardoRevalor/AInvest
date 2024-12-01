@@ -14,8 +14,20 @@ class SECAgent:
                      DataFetcher().get10k_7(self.ticker),
                      DataFetcher().get10k_7A(self.ticker),
                      DataFetcher().get10k_8(self.ticker)]
+        
+
+    def cleanData(self):
+        #before analyzing, exclude the items witch are just Errors
+
+        self.data = [d for d in self.data if isinstance(d, str) and d != "Error"]
 
     def generateResponse(self):
+
+        self.cleanData()
+
+        #if after the cleaning process self.data is empty, exit the function
+        if len(self.data) == 0:
+            return None
         
         data_raw =choice(self.data) #random item from the 10-K report
         data = summarize_text(data_raw)

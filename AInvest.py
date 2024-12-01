@@ -5,7 +5,7 @@ output_dir = "./output"
 template_file = "./html_report/report_template.html"
 
 def main():
-    ticker = "NKE"
+    ticker = "ASML"
     sec_agent = SECAgent(ticker=ticker, localmodel=True)
     analyst_agent = AnalystAgent(ticker=ticker, localmodel=True)
 
@@ -21,12 +21,22 @@ def main():
     print("TOP_ANALYSTS\n\n", result4)
     print("ARTICLES\n\n", articles)
 
-    sec_result = sec_agent.generateResponse()
-    print("SEC_RESULT\n\n", sec_result)
+    sec_result = None
+    try:
+        sec_result = sec_agent.generateResponse()
+        print("SEC_RESULT\n\n", sec_result)
+    except Exception as e:
+        print("Exception raised:", e)
+        sec_result = None
     
 
-    sentiment1, compound1 = analyst_agent.getSentiment_method1_News1()
-    print("\n\n", compound1)
+    try:
+        sentiment1, compound1 = analyst_agent.getSentiment_method1_News1()
+        print("\n\n", compound1)
+    except Exception as e:
+        print("Exception raised:", e)
+        sentiment1 = None
+        compound1 = None
 
 
     #build new report from template file
@@ -37,7 +47,9 @@ def main():
         template = template.replace("{news_2}", md.markdown(result3))
         template = template.replace("{analysts_1}", md.markdown(result4))
         template = template.replace("{articles}", md.markdown(articles))
-        template = template.replace("{sec_1}", md.markdown(sec_result))
+        if sec_result is not None:
+            template = template.replace("{sec_1}", md.markdown(sec_result))
+        else: template = template.replace("{sec_1}", "Unable to fetch 10-K Module for the stock.")
         template = template.replace("{ticker}", ticker)
         template = template.replace("{ap_result1}", md.markdown(ap_result))
         #save the report in output dir
