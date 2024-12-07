@@ -1,13 +1,15 @@
 from sec_agent import SECAgent
 from analyst_agent import AnalystAgent
+from news_insighter import NewsInsighter
 import markdown as md
 output_dir = "./output"
 template_file = "./html_report/report_template.html"
 
 def main():
-    ticker = "ASML"
+    ticker = "STAG"
     sec_agent = SECAgent(ticker=ticker, localmodel=True)
     analyst_agent = AnalystAgent(ticker=ticker, localmodel=True)
+    news_insighter = NewsInsighter(ticker=ticker, localmodel=True)
 
     result = analyst_agent.generateResponse_News1()
     result2 = analyst_agent.classifyNews1()
@@ -15,26 +17,35 @@ def main():
     result4 = analyst_agent.generateResponseTopAnalysts()
     articles = analyst_agent.evaluateArticle()
     ap_result = analyst_agent.generateResponse_AP_News()
-    print("ARTICLE MIX:\n\n", result)
-    print("NEWS_SOURCE_1:\n\n", result2)
-    print("NEWS_SOURCE_2\n\n", result3)
-    print("TOP_ANALYSTS\n\n", result4)
-    print("ARTICLES\n\n", articles)
+    #print("ARTICLE MIX:\n\n", result)
+    #print("NEWS_SOURCE_1:\n\n", result2)
+    #print("NEWS_SOURCE_2\n\n", result3)
+    #print("TOP_ANALYSTS\n\n", result4)
+    #rint("ARTICLES\n\n", articles)
 
     sec_result = None
     try:
         sec_result = sec_agent.generateResponse()
         print("SEC_RESULT\n\n", sec_result)
     except Exception as e:
-        print("Exception raised:", e)
+        print("Exception raised1:", e)
         sec_result = None
     
+    #concatenate the news from the two sources to create insights for the news insighter
+    news = result + "\n" + result2 + "\n" + result3
+    
+    bearCase = news_insighter.generateBearCase(news)
+    print("BEAR CASE\n\n", bearCase)
+
+    bullCase = news_insighter.generateBullCase(news)
+    print("BULL CASE\n\n", bullCase)
+
 
     try:
         sentiment1, compound1 = analyst_agent.getSentiment_method1_News1()
         print("\n\n", compound1)
     except Exception as e:
-        print("Exception raised:", e)
+        print("Exception raised2:", e)
         sentiment1 = None
         compound1 = None
 

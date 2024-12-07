@@ -17,6 +17,7 @@ class Scraper:
         self.news_url1 = f'https://stockmarketcap.com/company/{self.ticker}#news'
         self.news_url2 = f'https://finviz.com/quote.ashx?t={self.ticker}'
         self.news_url3 = f'https://finance.yahoo.com/quote/{self.ticker}/news/'
+        self.stockPrice_url = f'https://finviz.com/quote.ashx?t={self.ticker}'
     
     def use_playwright(self, url):
         """
@@ -122,6 +123,25 @@ class Scraper:
             data.append(table_row.a.text)
 
         return data
+    
+    def get_finviz_stock_price(self):
+        req = requests.get(self.stockPrice_url, headers=self.headers)
+        if req.status_code == 200:
+            page = req.content
+        else:
+            return "No data found"
+        
+        html = bs(page, 'html5lib')
+
+        #the div containing the stock price has class quote-price_wrapper or class: quote-price
+        #search text in that
+        stock_price = html.find('div', class_='quote-price_wrapper')
+        if not stock_price:
+            stock_price = html.find('div', class_='quote-price')
+        if not stock_price:
+            return "No data found"
+
+        return stock_price.text
         
 
     def get_news1(self):

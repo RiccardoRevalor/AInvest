@@ -141,4 +141,6 @@ class FilingsReader:
         items['item_8'] = item8_lxml.get_text("\n\n")
 
         return items
+    
+
         

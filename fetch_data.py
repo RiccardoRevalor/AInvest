@@ -87,6 +87,8 @@ class DataFetcher:
         #extract the content of html file
         with open(filing, 'r', encoding='utf-8' ) as f:
             content = f.read()
+            with open("output1.txt", "w", encoding='utf-8') as f:
+                f.write(content)
             f.close()
 
         if content is None:
@@ -327,6 +329,16 @@ class DataFetcher:
             #error: if items is a str it means filing was not fecthed properly
             return "Error"
         return items['item_8']
+    
+    def getStockPrice(self, ticker):
+        """
+        Get the stock price for the given ticker
+        Args:
+        ticker: str, the ticker of the company
+        Returns:
+        res: dict, the response of the download
+        """
+        return Scraper(ticker).get_finviz_stock_price()
 
 
         
@@ -335,8 +347,12 @@ class DataFetcher:
 if __name__ == "__main__":
     fetcher = DataFetcher()
     print("Fetching data...")
-    #res = fetcher.downloadSecFiling("GOOG", "10-K")
-    res = fetcher.get_estimates("MSFT")
+    res = fetcher.downloadSecFiling("MSFT", "10-K")
+    with open("output.txt", "w", encoding='utf-8') as f:
+        f.write(str(res))
+        f.close()
+    exit(1)
+    res = fetcher.get_estimates("WM")
     #print(res)
     with open("output.txt", "w", encoding='utf-8') as f:
         f.write(str(res))
